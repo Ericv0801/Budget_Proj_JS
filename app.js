@@ -1,6 +1,25 @@
 //BUDGET CONTROLLER
 var budgetController = (function() {
-  
+  var Expense = function(id, description, value) {
+    this.id = id;
+    this.description = description;
+    this.value = value;
+  };
+  var Income = function(id, description, value) {
+    this.id = id;
+    this.description = description;
+    this.value = value;
+  };
+  var data = {
+    allItems: {
+      exp: [],
+      inc: [],
+    },
+      totals: {
+        exp: 0,
+        inc: 0
+      }
+  };
 })();
 
 //UI CONTROLLER
@@ -40,7 +59,7 @@ var controller = (function(budgetCtrl, UICtrl) {
 
   var DOM = UICtrl.getDOMstrings();
 
-var ctrlAddItem = function() {
+  var ctrlAddItem = function() {
     //1. Get the filled input data
     var input = UICtrl.getinput();
     console.log(input);
@@ -53,13 +72,11 @@ var ctrlAddItem = function() {
     //5. Display the budget on the UI
   };
 
-  return{
-      init: function(){
-          setupEventListeners()
-      }
-  }
-
+  return {
+    init: function() {
+      setupEventListeners();
+    }
+  };
 })(budgetController, UIController);
-
 
 controller.init();
