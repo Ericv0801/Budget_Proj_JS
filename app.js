@@ -4,7 +4,19 @@ var budgetController = (function() {
     this.id = id;
     this.description = description;
     this.value = value;
+    this.percentage = -1;
   };
+  Expense.prototype.calcPercentage = function(totalIncome) {
+    if (totalIncome > 0) {
+      this.percentage = Math.round((this.value / totalIncome) * 100);
+    } else {
+      this.percentage = -1;
+    }
+  };
+  Expense.prototype.getPercentage = function() {
+    return this.percentage;
+  };
+
   var Income = function(id, description, value) {
     this.id = id;
     this.description = description;
@@ -50,16 +62,16 @@ var budgetController = (function() {
       return newItem;
     },
 
-    deleteItem: function(type, id){
-        var ids, index;
+    deleteItem: function(type, id) {
+      var ids, index;
 
-       ids =  data.allItems[type].map(function(current){
-            return current.id;
-        });
-        index = ids.indexOf(id);
-        if (index !== -1 ){
-            data.allItems[type].splice(index, 1);
-        }
+      ids = data.allItems[type].map(function(current) {
+        return current.id;
+      });
+      index = ids.indexOf(id);
+      if (index !== -1) {
+        data.allItems[type].splice(index, 1);
+      }
     },
 
     calculateBudget: function() {
@@ -78,6 +90,18 @@ var budgetController = (function() {
       }
     },
 
+    calculatePercentages: function() {
+      data.allItems.exp.forEach(function(cur) {
+        cur.calcPercentage(data.totals.inc);
+      });
+    },
+
+    getPercentages: function() {
+      var allPerc = data.allItems.exp.map(function(cur) {
+          return cur.getPercentage();
+      });
+      return allPerc;
+    },
     getBudget: function() {
       return {
         budget: data.budget,
@@ -135,9 +159,9 @@ var UIController = (function() {
       // insert the HTML into the DOM
       document.querySelector(element).insertAdjacentHTML("beforeend", newHtml);
     },
-    deleteListItem: function(selectorID){
-        var el=  document.getElementById(selectorID)
-        el.parentNode.removeChild(el)
+    deleteListItem: function(selectorID) {
+      var el = document.getElementById(selectorID);
+      el.parentNode.removeChild(el);
     },
 
     clearFields: function() {
@@ -191,8 +215,6 @@ var controller = (function(budgetCtrl, UICtrl) {
       .addEventListener("click", ctrlDeleteItem);
   };
 
-
-
   var updateBudget = function() {
     // 1.Calculate Budget
     budgetCtrl.calculateBudget();
@@ -204,15 +226,14 @@ var controller = (function(budgetCtrl, UICtrl) {
     UICtrl.displayBudget(budget);
   };
 
-  var updatePercentages = function(){
-
+  var updatePercentages = function() {
     // 1. Calculate Percentages
-
+        budgetCtrl.calculatePercentages();
     // 2. Read Percentages from the budget controller.
-
+    var percentages = budgetCtrl.getPercentages();
     // 3. Update the UI with the new percentages
-
-  }
+        console.log(percentages)
+  };
   var ctrlAddItem = function() {
     var input, newItem;
     //1. Get the filled input data
@@ -241,24 +262,23 @@ var controller = (function(budgetCtrl, UICtrl) {
 
     itemID = event.target.parentNode.parentNode.parentNode.parentNode.id;
 
-    if(itemID){
+    if (itemID) {
+      //inc-1
+      splitID = itemID.split("-");
+      type = splitID[0];
+      ID = parseInt(splitID[1]);
 
-        //inc-1
-        splitID = itemID.split('-');
-        type = splitID[0];
-        ID = parseInt(splitID[1]);
+      // 1. Delete Item From Data Structure
+      budgetCtrl.deleteItem(type, ID);
+      // 2. Delete the item from the UI
+      UICtrl.deleteListItem(itemID);
 
-        // 1. Delete Item From Data Structure
-        budgetCtrl.deleteItem(type, ID);
-        // 2. Delete the item from the UI
-        UICtrl.deleteListItem(itemID);
+      // 3. Update and show the new budget.
+      updateBudget();
 
-        // 3. Update and show the new budget.
-        updateBudget();
-
-        //4. Calculate and update percentages
-        updatePercentages();
-    } 
+      //4. Calculate and update percentages
+      updatePercentages();
+    }
   };
 
   return {
